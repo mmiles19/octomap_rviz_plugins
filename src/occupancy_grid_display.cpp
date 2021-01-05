@@ -48,6 +48,7 @@
 
 #include <octomap/octomap.h>
 #include <octomap/ColorOcTree.h>
+#include <octomap/RoughOcTree.h>
 #include <octomap_msgs/Octomap.h>
 #include <octomap_msgs/conversions.h>
 
@@ -73,6 +74,7 @@ enum OctreeVoxelColorMode
   OCTOMAP_CELL_COLOR,
   OCTOMAP_Z_AXIS_COLOR,
   OCTOMAP_PROBABLILTY_COLOR,
+  OCTOMAP_ROUGH_COLOR,
 };
 
 OccupancyGridDisplay::OccupancyGridDisplay() :
@@ -116,6 +118,7 @@ OccupancyGridDisplay::OccupancyGridDisplay() :
   octree_coloring_property_->addOption( "Cell Color",  OCTOMAP_CELL_COLOR );
   octree_coloring_property_->addOption( "Z-Axis",  OCTOMAP_Z_AXIS_COLOR );
   octree_coloring_property_->addOption( "Cell Probability",  OCTOMAP_PROBABLILTY_COLOR );
+  octree_coloring_property_->addOption( "Cell Roughness",  OCTOMAP_ROUGH_COLOR );
   alpha_property_ = new rviz::FloatProperty( "Voxel Alpha", 1.0, "Set voxel transparency alpha",
                                              this, 
                                              SLOT( updateAlpha() ) );
@@ -379,6 +382,18 @@ bool TemplatedOccupancyGridDisplay<OcTreeType>::checkType(std::string type_id)
 }
   
 template <>
+bool TemplatedOccupancyGridDisplay<octomap::RoughOcTreeStamped>::checkType(std::string type_id)
+{
+  if(type_id == "RoughOcTreeStamped") return true;
+  else return false;
+}
+template <>
+bool TemplatedOccupancyGridDisplay<octomap::RoughOcTree>::checkType(std::string type_id)
+{
+  if(type_id == "RoughOcTree") return true;
+  else return false;
+}
+template <>
 bool TemplatedOccupancyGridDisplay<octomap::OcTreeStamped>::checkType(std::string type_id)
 {
   if(type_id == "OcTreeStamped") return true;
@@ -398,6 +413,7 @@ bool TemplatedOccupancyGridDisplay<octomap::ColorOcTree>::checkType(std::string 
   else return false;
 }
 
+
 template <typename OcTreeType>
 void TemplatedOccupancyGridDisplay<OcTreeType>::setVoxelColor(PointCloud::Point& newPoint, 
                                                               typename OcTreeType::NodeType& node,
@@ -409,6 +425,9 @@ void TemplatedOccupancyGridDisplay<OcTreeType>::setVoxelColor(PointCloud::Point&
   {
     case OCTOMAP_CELL_COLOR:
       setStatus(StatusProperty::Error, "Messages", QString("Cannot extract color"));
+      //Intentional fall-through for else-case
+    case OCTOMAP_ROUGH_COLOR:
+      setStatus(StatusProperty::Error, "Messages", QString("Cannot extract roughness"));
       //Intentional fall-through for else-case
     case OCTOMAP_Z_AXIS_COLOR:
       setColor(newPoint.position.z, minZ, maxZ, color_factor_, newPoint);
@@ -439,6 +458,9 @@ void TemplatedOccupancyGridDisplay<octomap::ColorOcTree>::setVoxelColor(PointClo
       newPoint.setColor(b2f*color.r, b2f*color.g, b2f*color.b, node.getOccupancy());
       break;
     }
+    case OCTOMAP_ROUGH_COLOR:
+      setStatus(StatusProperty::Error, "Messages", QString("Cannot extract roughness"));
+      //Intentional fall-through for else-case
     case OCTOMAP_Z_AXIS_COLOR:
       setColor(newPoint.position.z, minZ, maxZ, color_factor_, newPoint);
       break;
@@ -451,6 +473,58 @@ void TemplatedOccupancyGridDisplay<octomap::ColorOcTree>::setVoxelColor(PointClo
   }
 }
 
+template <>
+void TemplatedOccupancyGridDisplay<octomap::RoughOcTree>::setVoxelColor(PointCloud::Point& newPoint, 
+                                                              octomap::RoughOcTree::NodeType& node,
+                                                              double minZ, double maxZ)
+{
+  OctreeVoxelColorMode octree_color_mode = static_cast<OctreeVoxelColorMode>(octree_coloring_property_->getOptionInt());
+  float cell_probability;
+  switch (octree_color_mode)
+  {
+    case OCTOMAP_CELL_COLOR:
+      setStatus(StatusProperty::Error, "Messages", QString("Cannot extract color"));
+      //Intentional fall-through for else-case
+    case OCTOMAP_ROUGH_COLOR:
+      newPoint.setColor(((octomap::RoughOcTreeNode)node).getRoughColor().r, ((octomap::RoughOcTreeNode)node).getRoughColor().g, ((octomap::RoughOcTreeNode)node).getRoughColor().b);
+      break;
+    case OCTOMAP_Z_AXIS_COLOR:
+      setColor(newPoint.position.z, minZ, maxZ, color_factor_, newPoint);
+      break;
+    case OCTOMAP_PROBABLILTY_COLOR:
+      cell_probability = node.getOccupancy();
+      newPoint.setColor((1.0f-cell_probability), cell_probability, 0.0);
+      break;
+    default:
+      break;
+  }
+}
+template <>
+void TemplatedOccupancyGridDisplay<octomap::RoughOcTreeStamped>::setVoxelColor(PointCloud::Point& newPoint, 
+                                                              octomap::RoughOcTreeStamped::NodeType& node,
+                                                              double minZ, double maxZ)
+{
+  OctreeVoxelColorMode octree_color_mode = static_cast<OctreeVoxelColorMode>(octree_coloring_property_->getOptionInt());
+  float cell_probability;
+  switch (octree_color_mode)
+  {
+    case OCTOMAP_CELL_COLOR:
+      setStatus(StatusProperty::Error, "Messages", QString("Cannot extract color"));
+      //Intentional fall-through for else-case
+    case OCTOMAP_ROUGH_COLOR:
+      newPoint.setColor(((octomap::RoughOcTreeNodeStamped)node).getRoughColor().r, ((octomap::RoughOcTreeNodeStamped)node).getRoughColor().g, ((octomap::RoughOcTreeNodeStamped)node).getRoughColor().b);
+      break;
+    case OCTOMAP_Z_AXIS_COLOR:
+      setColor(newPoint.position.z, minZ, maxZ, color_factor_, newPoint);
+      break;
+    case OCTOMAP_PROBABLILTY_COLOR:
+      cell_probability = node.getOccupancy();
+      newPoint.setColor((1.0f-cell_probability), cell_probability, 0.0);
+      break;
+    default:
+      break;
+  }
+}
 
 bool OccupancyGridDisplay::updateFromTF()
 {
@@ -618,10 +692,14 @@ void TemplatedOccupancyGridDisplay<OcTreeType>::incomingMessageCallback(const oc
 
 #include <pluginlib/class_list_macros.h>
 
+typedef octomap_rviz_plugin::TemplatedOccupancyGridDisplay<octomap::RoughOcTreeStamped> RoughOcTreeStampedGridDisplay;
+typedef octomap_rviz_plugin::TemplatedOccupancyGridDisplay<octomap::RoughOcTree> RoughOcTreeGridDisplay;
 typedef octomap_rviz_plugin::TemplatedOccupancyGridDisplay<octomap::OcTree> OcTreeGridDisplay;
 typedef octomap_rviz_plugin::TemplatedOccupancyGridDisplay<octomap::ColorOcTree> ColorOcTreeGridDisplay;
 typedef octomap_rviz_plugin::TemplatedOccupancyGridDisplay<octomap::OcTreeStamped> OcTreeStampedGridDisplay;
 
+PLUGINLIB_EXPORT_CLASS( RoughOcTreeStampedGridDisplay, rviz::Display)
+PLUGINLIB_EXPORT_CLASS( RoughOcTreeGridDisplay, rviz::Display)
 PLUGINLIB_EXPORT_CLASS( OcTreeGridDisplay, rviz::Display)
 PLUGINLIB_EXPORT_CLASS( ColorOcTreeGridDisplay, rviz::Display)
 PLUGINLIB_EXPORT_CLASS( OcTreeStampedGridDisplay, rviz::Display)
