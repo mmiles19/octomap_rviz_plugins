@@ -24,6 +24,7 @@
   <build_depend>qtbase5-dev</build_depend>
   <build_depend>libqt5-core</build_depend>
   <build_depend>libqt5-widgets</build_depend>
+  <build_depend>rough_octomap</build_depend>
  
   <run_depend>octomap_msgs</run_depend>
   <run_depend>octomap</run_depend>
@@ -32,6 +33,7 @@
   <run_depend>qtbase5-dev</run_depend>
   <run_depend>libqt5-core</run_depend>
   <run_depend>libqt5-widgets</run_depend>
+  <run_depend>rough_octomap</run_depend>
 
   <export>
     <rviz plugin="${prefix}/plugin_description.xml"/>

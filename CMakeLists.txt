@@ -4,6 +4,7 @@ project(octomap_rviz_plugins)
 find_package(catkin REQUIRED COMPONENTS octomap_msgs
                                         roscpp
                                         rviz
+                                        rough_octomap
                                         
 )
 

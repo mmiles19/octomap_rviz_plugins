@@ -45,7 +45,7 @@
 
 #include <octomap/OcTreeStamped.h>
 #include <octomap/ColorOcTree.h>
-#include <octomap/RoughOcTree.h>
+#include <rough_octomap/RoughOcTree.h>
 
 #include <rviz/display.h>
 #include "rviz/ogre_helpers/point_cloud.h"
