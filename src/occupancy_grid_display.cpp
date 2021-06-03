@@ -50,7 +50,7 @@
 #include <octomap/ColorOcTree.h>
 #include <rough_octomap/RoughOcTree.h>
 #include <octomap_msgs/Octomap.h>
-#include <octomap_msgs/conversions.h>
+#include <rough_octomap/conversions.h>
 
 
 #include <sstream>
